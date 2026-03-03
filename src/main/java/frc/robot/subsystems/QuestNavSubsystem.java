@@ -43,8 +43,8 @@ public class QuestNavSubsystem extends SubsystemBase {
     // Quest arkada ve arkaya bakıyor (yaw = PI)
     private static final Transform3d ROBOT_TO_QUEST =
         new Transform3d(
-            new Translation3d(-0.30, 0.15, 0.40),
-            new Rotation3d(0.0, 0.0, Math.PI)
+            new Translation3d(0.30, -0.15, 0.40),
+            new Rotation3d(0.0, 0.0, Math.PI/2)
         );
 
     // ---------------- STD DEVS ----------------

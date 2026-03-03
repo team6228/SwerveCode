@@ -17,7 +17,6 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ModuleConstants;
 
@@ -111,7 +110,7 @@ public class SwerveModule extends SubsystemBase{
     public void periodic() {
         // Her döngüde kalibrasyonu güncellemek istersen buraya ekleyebilirsin
         updateCalibration(); 
-        logCalibrationData();
+        //logCalibrationData();
 
     }
 
@@ -121,13 +120,13 @@ public class SwerveModule extends SubsystemBase{
 
     
 
-    public void logCalibrationData() {
-        // Artık moduleID hata vermeyecek
-        SmartDashboard.putNumber(moduleID + "_MinVolt", calibratedMinVolt);
-        SmartDashboard.putNumber(moduleID + "_MaxVolt", calibratedMaxVolt);
-        SmartDashboard.putNumber(moduleID + "_CurrentVolt", angleEncoder.getVoltage());
-        SmartDashboard.putNumber(moduleID + "_AdjustedAngleDeg", Math.toDegrees(getPerfectAngleRadians()));
-    }
+    // public void logCalibrationData() {
+    //     // Artık moduleID hata vermeyecek
+    //     SmartDashboard.putNumber(moduleID + "_MinVolt", calibratedMinVolt);
+    //     SmartDashboard.putNumber(moduleID + "_MaxVolt", calibratedMaxVolt);
+    //     SmartDashboard.putNumber(moduleID + "_CurrentVolt", angleEncoder.getVoltage());
+    //     SmartDashboard.putNumber(moduleID + "_AdjustedAngleDeg", Math.toDegrees(getPerfectAngleRadians()));
+    // }
 
     public void setDesiredState(SwerveModuleState desiredState) {
       SwerveModuleState correctedDesiredState = new SwerveModuleState();

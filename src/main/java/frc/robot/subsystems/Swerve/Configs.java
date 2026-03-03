@@ -35,10 +35,12 @@ public class Configs {
 
             driveConfig.closedLoop
                     .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                    .pid(0.04, 0, 0)
+                    .pid(0.055, 0, 0.01)
                     .velocityFF(driveVelocityFeedForward)
                     .outputRange(-1, 1);
-            
+                    //.feedForward.kV(driveVelocityFeedForward);
+                // önceki hali
+                //.outputRange()
          
 
             double angleFactor = (2 * Math.PI)/3.4;
@@ -54,7 +56,7 @@ public class Configs {
 
             angleConfig.closedLoop
                     .feedbackSensor(FeedbackSensor.kAnalogSensor)
-                    .pid(0.6, 0, 0)
+                    .pid(0.58, 0, 0.0)
                     .outputRange(-1, 1)
                     .positionWrappingEnabled(true)
                     .positionWrappingInputRange(0, (angleFactor+0.5));

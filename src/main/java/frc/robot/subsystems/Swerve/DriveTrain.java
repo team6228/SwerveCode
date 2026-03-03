@@ -28,7 +28,9 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveContants;
 
@@ -45,6 +47,8 @@ public class DriveTrain extends SubsystemBase{
 
     private final PIDController turnPID= new PIDController(0.01,0,0);
 
+    private final SendableChooser<Pose2d> autoPosChooser = new SendableChooser<>();
+
     // private final SwerveDriveOdometry odometry;
 
     private final StructPublisher<Pose2d> posePublisher = NetworkTableInstance.getDefault()
@@ -60,6 +64,15 @@ public class DriveTrain extends SubsystemBase{
 
     public DriveTrain(){
 
+        
+        autoPosChooser.setDefaultOption("Center State", new Pose2d(3.522, 4.0, new Rotation2d(0)));
+        autoPosChooser.addOption("Left Satte (Red)", new Pose2d(15.0, 7.0, Rotation2d.fromDegrees(0)));
+        autoPosChooser.addOption("Right State (Red)", new Pose2d(15.0, 1.5, Rotation2d.fromDegrees(0)));
+
+        SmartDashboard.putData("Auto Start State", autoPosChooser);
+        // Constructor sonuna ekle
+        SmartDashboard.putData("Update State", new InstantCommand(this::resetPoseToSelected).ignoringDisable(true));
+
         zeroHeading();
 
         poseEstimator =
@@ -67,7 +80,7 @@ public class DriveTrain extends SubsystemBase{
                 DriveContants.kDriveKinematics,     // SwerveDriveKinematics
                 getRotation2d(),              // Rotation2d
                 getModulePositions(),           // SwerveModulePosition[]
-                new Pose2d()                    // başlangıç pozu
+                autoPosChooser.getSelected()              // başlangıç pozu
             );
 
         
@@ -123,6 +136,15 @@ public class DriveTrain extends SubsystemBase{
                 DriverStation.reportError("PathPlanner config yüklenemedi usta!: " + e.getMessage(), true);
             }
         
+    }
+
+    public void resetPoseToSelected() {
+        Pose2d seciliPoz = autoPosChooser.getSelected();
+        if (seciliPoz != null) {
+            // Robotun estimator'ını ve gyro'sunu bu seçilen konuma göre sıfırlar
+            resetOdometry(seciliPoz);
+            System.out.println("Reseted Robot Pose: " + seciliPoz);
+        }
     }
 
     public void addVisionMeasurement(
@@ -191,7 +213,6 @@ public class DriveTrain extends SubsystemBase{
         setModuleStates(states);
     }
     
-    // Mevcut hızı ChassisSpeeds olarak döndüren metod (PathPlanner geri bildirim için kullanır)
     public ChassisSpeeds getRobotRelativeSpeeds() {
         return DriveContants.kDriveKinematics.toChassisSpeeds(
             new SwerveModuleState[] {
@@ -203,7 +224,6 @@ public class DriveTrain extends SubsystemBase{
 
     @Override
     public void periodic() {
-        // Odometry güncelleme (Robotun sahadaki yerini hesaplar)
         /*
 
         odometry.update(
@@ -217,20 +237,28 @@ public class DriveTrain extends SubsystemBase{
         
         */
 
+        autoPosChooser.setDefaultOption("Center State", new Pose2d(3.522, 4.0, new Rotation2d(0)));
+        autoPosChooser.addOption("Left Satte (Red)", new Pose2d(15.0, 7.0, Rotation2d.fromDegrees(0)));
+        autoPosChooser.addOption("Right State (Red)", new Pose2d(15.0, 1.5, Rotation2d.fromDegrees(0)));
+
+        SmartDashboard.putData("Auto Start State", autoPosChooser);
+        // Constructor sonuna ekle
+        //SmartDashboard.putData("Update State", new InstantCommand(this::resetPoseToSelected).ignoringDisable(true));
+
         poseEstimator.update(getRotation2d(), getModulePositions());
         
         posePublisher.set(getPose());
 
-        frontLeft.logCalibrationData();
+        //frontLeft.logCalibrationData();
         frontLeft.updateCalibration();
 
-        frontRight.logCalibrationData();    
+        //frontRight.logCalibrationData();    
         frontRight.updateCalibration();
 
-        backLeft.logCalibrationData();
+        //backLeft.logCalibrationData();
         backLeft.updateCalibration();
 
-        backRight.logCalibrationData();
+        //backRight.logCalibrationData();
         backRight.updateCalibration();
 
         m_publisher.set(new SwerveModuleState[] {
@@ -241,7 +269,7 @@ public class DriveTrain extends SubsystemBase{
         });
     
         
-        SmartDashboard.putNumber("fl velocity", frontLeft.getVelocity());
+        /*SmartDashboard.putNumber("fl velocity", frontLeft.getVelocity());
         SmartDashboard.putNumber("fr velocity", frontRight.getVelocity());
         SmartDashboard.putNumber("bl velocity", backLeft.getVelocity());
         SmartDashboard.putNumber("br velocity", backRight.getVelocity());
@@ -253,6 +281,7 @@ public class DriveTrain extends SubsystemBase{
         SmartDashboard.putNumber("RL Angle Deg", Math.toDegrees(backLeft.getAngle()));
         SmartDashboard.putNumber("RR Angle Deg", Math.toDegrees(backRight.getAngle()));
         SmartDashboard.putNumber("Robot Heading", getHeading());
+    */
     }
 
     public void drive(double xSpeed, double ySpeed, double rotation, boolean fieldRelative) {
@@ -276,7 +305,6 @@ public class DriveTrain extends SubsystemBase{
             backRight.getAngle(),  backRight.getVelocity()
         };
     
-        // Bu isimle (SwerveStates) gönderiyoruz
         SmartDashboard.putNumberArray("SwerveStates", swerveStates);
     }
 
@@ -291,9 +319,9 @@ public class DriveTrain extends SubsystemBase{
   }
 
     public Rotation2d getRotation2d() {
-        //return Rotation2d.fromDegrees(DriveContants.gyroReversed ? navx.getAngle() : -navx.getAngle());
+        return Rotation2d.fromDegrees(DriveContants.gyroReversed ? navx.getAngle() : -navx.getAngle());
 
-        return navx.getRotation2d();
+        //return navx.getRotation2d();
     }
 
     public Pose2d getPose() {
@@ -339,88 +367,88 @@ public class DriveTrain extends SubsystemBase{
 
 
     public void driveAtTarget(double xSpeed, double ySpeed) {
-    // 1. Hedef Koordinatlar
-    double targetX = 4.625594;
-    double targetY = 4.034536;
+        // 1. Hedef Koordinatlar
+        double targetX = 4.625594;
+        double targetY = 4.034536;
 
-    Pose2d currentPose = getPose();
+        Pose2d currentPose = getPose();
 
-    // 2. Hedef vektörü (field-relative)
-    double dx = targetX - currentPose.getX();
-    double dy = targetY - currentPose.getY();
+        // 2. Hedef vektörü (field-relative)
+        double dx = targetX - currentPose.getX();
+        double dy = targetY - currentPose.getY();
 
-    // 3. Robot frame'ine çevir (field -> robot)
-    Rotation2d robotRot = currentPose.getRotation();
+        // 3. Robot frame'ine çevir (field -> robot)
+        Rotation2d robotRot = currentPose.getRotation();
 
-    double localX =  dx * robotRot.getCos() + dy * robotRot.getSin();
-    double localY = -dx * robotRot.getSin() + dy * robotRot.getCos();
+        double localX =  dx * robotRot.getCos() + dy * robotRot.getSin();
+        double localY = -dx * robotRot.getSin() + dy * robotRot.getCos();
 
-    // -------------------------------------------------
-    // 🔥 AIM OFFSET HESABI
-    // -------------------------------------------------
+        // -------------------------------------------------
+        // 🔥 AIM OFFSET HESABI
+        // -------------------------------------------------
 
-    // (A) Konuma bağlı küçük stabil ofset
-    double kPosAim = 2.0; // derece / metre
-    double positionalOffset =
-        MathUtil.clamp(localY * kPosAim, -3.0, 3.0);
+        // (A) Konuma bağlı küçük stabil ofset
+        double kPosAim = 2.0; // derece / metre
+        double positionalOffset =
+            MathUtil.clamp(localY * kPosAim, -3.0, 3.0);
 
-    // (B) Hıza bağlı lead (ASIL OLAY)
-    double lateralSpeed =
-        ySpeed * DriveContants.maxSpeedMetersPerSecond; // m/s
+        // (B) Hıza bağlı lead (ASIL OLAY)
+        double lateralSpeed =
+            ySpeed * DriveContants.maxSpeedMetersPerSecond; // m/s
 
-    double kVelocityAim = 3.0; // derece / (m/s)
-    double velocityOffset =
-        MathUtil.clamp(lateralSpeed * kVelocityAim, -6.0, 6.0);
+        double kVelocityAim = 3.0; // derece / (m/s)
+        double velocityOffset =
+            MathUtil.clamp(lateralSpeed * kVelocityAim, -6.0, 6.0);
 
-    // (C) Toplam ofset
-    double angleOffset = positionalOffset + velocityOffset;
+        // (C) Toplam ofset
+        double angleOffset = positionalOffset + velocityOffset;
 
-    // Hedef arkadaysa saçmalamasın
-    if (localX < 0.0) {
-        angleOffset = 0.0;
-    }
+        // Hedef arkadaysa saçmalamasın
+        if (localX < 0.0) {
+            angleOffset = 0.0;
+        }
 
-    // 4. Hedef açısı + ofset
-    double angleToTarget =
-        Math.toDegrees(Math.atan2(dy, dx)) + angleOffset;
+        // 4. Hedef açısı + ofset
+        double angleToTarget =
+            Math.toDegrees(Math.atan2(dy, dx)) + angleOffset;
 
-    // 5. PID ile dönüş
-    double angleError =
-        Math.IEEEremainder(getHeading() - angleToTarget, 360);
+        // 5. PID ile dönüş
+        double angleError =
+            Math.IEEEremainder(getHeading() - angleToTarget, 360);
 
-    double rotationOutput = turnPID.calculate(angleError, 0);
-    rotationOutput = MathUtil.clamp(rotationOutput, -0.5, 0.5);
+        double rotationOutput = turnPID.calculate(angleError, 0);
+        rotationOutput = MathUtil.clamp(rotationOutput, -0.5, 0.5);
 
-    // Deadband (titreşim kesici)
-    if (Math.abs(angleError) < 0.5) {
-        rotationOutput = 0;
-    }
+        // Deadband (titreşim kesici)
+        if (Math.abs(angleError) < 0.5) {
+            rotationOutput = 0;
+        }
 
-    // 6. Şasi hızları
-    double xVel = xSpeed * DriveContants.maxSpeedMetersPerSecond;
-    double yVel = ySpeed * DriveContants.maxSpeedMetersPerSecond;
-    double rVel = rotationOutput * DriveContants.maxAngularSpeed;
+        // 6. Şasi hızları
+        double xVel = xSpeed * DriveContants.maxSpeedMetersPerSecond;
+        double yVel = ySpeed * DriveContants.maxSpeedMetersPerSecond;
+        double rVel = rotationOutput * DriveContants.maxAngularSpeed;
 
-    // 7. Field-relative sürüş
-    ChassisSpeeds chassisSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            xVel,
-            yVel,
-            rVel,
-            getRotation2d()
+        // 7. Field-relative sürüş
+        ChassisSpeeds chassisSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                xVel,
+                yVel,
+                rVel,
+                getRotation2d()
+            );
+
+        // 8. Modüllere gönder
+        var states =
+            DriveContants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+
+        SwerveDriveKinematics.desaturateWheelSpeeds(
+            states,
+            DriveContants.maxSpeedMetersPerSecond
         );
 
-    // 8. Modüllere gönder
-    var states =
-        DriveContants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
-
-    SwerveDriveKinematics.desaturateWheelSpeeds(
-        states,
-        DriveContants.maxSpeedMetersPerSecond
-    );
-
-    setModuleStates(states);
-}
+        setModuleStates(states);
+    }
 
 
     public void lockFront(double xSpeed, double ySpeed) {

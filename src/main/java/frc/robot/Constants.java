@@ -3,23 +3,13 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot;
-import java.util.List;
+//import java.util.List;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
-/**
- * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
- * constants. This class should not be used for any other purpose. All constants should be declared
- * globally (i.e. public static). Do not put anything functional in this class.
- *
- * <p>It is advised to statically import this class (or one of its inner classes) wherever the
- * constants are needed, to reduce verbosity.
- */
+
 public final class Constants {
-  public static class OperatorConstants {
-    public static final int kDriverControllerPort = 0;
-  }
 
   public static class ModuleConstants {
     public static final double wheelDiameterMeters = Units.inchesToMeters(3.0);
@@ -55,7 +45,8 @@ public final class Constants {
 
     public static final double moduleOffsetMeters = Units.inchesToMeters(26.06) / 2.0;
 
-// PathPlanner'ın beklediği liste (Sıralama: FL, FR, BL, BR)
+  /*
+    
     public static final List<Translation2d> moduleOffsets = List.of(
         new Translation2d(moduleOffsetMeters, moduleOffsetMeters),   // Front Left (+X, +Y)
         new Translation2d(moduleOffsetMeters, -moduleOffsetMeters),  // Front Right (+X, -Y)
@@ -63,10 +54,9 @@ public final class Constants {
         new Translation2d(-moduleOffsetMeters, -moduleOffsetMeters)  // Back Right (-X, -Y)
     );
 
+  */
 
 
-
-    
     public static final double flChassisAngularOffset = Math.toRadians(274);
     public static final double frChassisAngularOffset = Math.toRadians(250);
     public static final double blChassisAngularOffset = Math.toRadians(65);
@@ -82,23 +72,36 @@ public final class Constants {
             new Translation2d(-wheelBase / 2, -trackWidth / 2)  // Rear Right
         );
 
-    public static final double maxSpeedMetersPerSecond = 10; // Yaklaşık 14-15 ft/s
-    public static final double maxAngularSpeed = (10 * Math.PI);  // Saniyede 1 tam tur (radyan)
+    public static final double maxSpeedMetersPerSecond = 10;
+    public static final double maxAngularSpeed = (10 * Math.PI);
 
 
-        // --- Gyro Ayarı ---
-        // NavX montaj yönüne göre gerekirse true yapın
-    public static final boolean gyroReversed = false;
+    
+    public static final boolean gyroReversed = true;
   }
 
   public static final class OIConstants {
-    // Kumandanın takılı olduğu USB portu (Driver Station'da görülür)
     public static final int primaryPort = 0;
 
-    // Joystick Ölü Bölgesi (Deadband)
-    // 0.05 ile 0.1 arası idealdir. 
-    // Joystick eski ve gevşekse bu değeri biraz daha artırabilirsin.
+    // 0.05 ile 0.1 arası 
     public static final double driveDeadband = 0.1;
+  }
+
+  public static final class ShooterConstants {
+    public static final int masterNeoCanID = 11;
+    public static final int follower1NeoCanID = 9;
+    public static final int follower2NeoCanID = 10;
+
+    public static final int hoodMotorPort = 1;
+    public static final int hoodPotPort = 1;
+    public static final int hoodPotRange = 270;
+    public static final double hoodPotOffset = 28.5;
+
+  }
+
+  public static final class FeederConstants {
+    public static final int feederMotor = 0;
+    public static final int indexerMotor = 2;
 
   }
 }
