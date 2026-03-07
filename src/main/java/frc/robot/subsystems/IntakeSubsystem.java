@@ -2,14 +2,15 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
-import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
+import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.IntakeConstants;
 
 public class IntakeSubsystem extends SubsystemBase{
 
-    private final DoubleSolenoid intakeSolenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
-    private final VictorSP intakeMotor = new VictorSP(5);
+    private final DoubleSolenoid intakeSolenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, IntakeConstants.intakeForwardChannel, IntakeConstants.intakeReverseChannel);
+    private final PWMSparkMax intakeMotor = new PWMSparkMax(IntakeConstants.intakeMotorPWM);
     public IntakeSubsystem(){
 
     }
@@ -29,10 +30,14 @@ public class IntakeSubsystem extends SubsystemBase{
     }
 
     public void intakeToggle(){
-        intakeSolenoid.toggle();
+        if (intakeSolenoid.get() == DoubleSolenoid.Value.kForward) {
+            intakeSolenoid.set(DoubleSolenoid.Value.kReverse);
+        } else {
+            intakeSolenoid.set(DoubleSolenoid.Value.kForward);
+        }
     }
 
-    public void runIntake(double speed){
-        intakeMotor.set(speed);
+    public void runIntake(){
+        intakeMotor.set(1);
     }
 }

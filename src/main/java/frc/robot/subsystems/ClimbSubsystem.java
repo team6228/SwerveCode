@@ -5,17 +5,16 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.ClimbConstants;
 
 public class ClimbSubsystem extends SubsystemBase{
     private final Compressor compressor = new Compressor(PneumaticsModuleType.CTREPCM);
 
-    private final DoubleSolenoid climbSolenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 2, 3);
+    private final DoubleSolenoid climbSolenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, ClimbConstants.climbForwardChannel, ClimbConstants.climbReverseChannel);
     
-    private boolean shooterReady = SmartDashboard.getBoolean("Shooter/Hiz Tamam", false);
-
     public ClimbSubsystem(){
         
-        compressor.disable();//compresor.enableDigital() olarak değiştir çalışmazsa!!!
+        compressor.enableDigital();
 
     }
 
@@ -25,13 +24,6 @@ public class ClimbSubsystem extends SubsystemBase{
         SmartDashboard.putBoolean("Climb/IsPressureReady", compressor.getPressureSwitchValue());
         SmartDashboard.putBoolean("Climb/ClimbReady", climbSolenoid.get() == DoubleSolenoid.Value.kForward);
 
-
-        //Çalışmazsa sil ve 20. satırı düzelt
-        if(shooterReady){
-            compressor.enableDigital();
-        } else{
-            compressor.disable();
-        }
     }
 
     public void climbForward(){
@@ -51,5 +43,18 @@ public class ClimbSubsystem extends SubsystemBase{
         }
     }
 
+    public void compressorToggle(){
+        compressor.disable();
+
+        if(compressor.isEnabled()){
+            compressor.disable();
+        } else{
+            compressor.enableDigital();
+        }
+    }
+
+    public void compressorDisable(){
+        compressor.disable();
+    }
 
 }

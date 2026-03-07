@@ -13,6 +13,7 @@ import frc.robot.subsystems.ShooterTestSubsystem;
 import frc.robot.subsystems.Swerve.DriveTrain;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -40,33 +41,47 @@ public class RobotContainer {
 
   public static final CommandXboxController primary = new CommandXboxController(OIConstants.primaryPort);
 
-  private static final double slowFactor = 0.5;
+  //private static final double slowFactor = 0.5;
+
 
   public RobotContainer() {
+    NamedCommands.registerCommand("Open Intake", new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
+    NamedCommands.registerCommand("Close Intake", new InstantCommand(() -> intakeSubsystem.closeIntake(), intakeSubsystem));
+    NamedCommands.registerCommand("Open Climb", new InstantCommand(() -> climbSubsystem.climbForward(), climbSubsystem));
+    NamedCommands.registerCommand("Close Climb", new InstantCommand(() -> climbSubsystem.climbReverse(), climbSubsystem));
+    NamedCommands.registerCommand("Feed Shooter", new InstantCommand(() -> feederSubsystem.feedShooter(), feederSubsystem));
+    NamedCommands.registerCommand("Shoot", new ParallelCommandGroup(
+                  new RunCommand(() -> {shooter.shoot(); shooter.enablePID();}, shooter),
+                  new WaitUntilCommand(() -> shooter.isReady())
+                    .andThen(new RunCommand(() -> feederSubsystem.feedShooter(), feederSubsystem))
+                    
+                  ));
+
     configureBindings();
 
     autoChooser = AutoBuilder.buildAutoChooser();
-     SmartDashboard.putData("Auto Chooser", autoChooser);
+    SmartDashboard.putData("Auto Chooser", autoChooser);
         // Varsayılan Sürüş Komutu: Robot her zaman joystick verilerini dinler
-        drivetrain.setDefaultCommand(
-            new RunCommand(
-                () -> {
-                    // Joystick verilerini al (WPILib standartları için Y ters çevrilir)
-                    double ySpeed = -MathUtil.applyDeadband(primary.getLeftY(), OIConstants.driveDeadband);
-                    double xSpeed = -MathUtil.applyDeadband(primary.getLeftX(), OIConstants.driveDeadband);
-                    double rot = -MathUtil.applyDeadband(primary.getRightX(), OIConstants.driveDeadband);
-    
-                    // B butonuna basılıyorsa hızı %50'ye düşür
-                    if (primary.b().getAsBoolean()) {
-                        ySpeed *= slowFactor;
-                        xSpeed *= slowFactor;
-                        rot *= slowFactor;
-                    }
-    
-                    // Sürüşü başlat (fieldRelative: true -> Saha odaklı sürüş)
-                    drivetrain.drive(ySpeed, xSpeed, rot, true);
-                },
-                drivetrain));
+    drivetrain.setDefaultCommand(
+        new RunCommand(
+            () -> {
+                // Joystick verilerini al (WPILib standartları için Y ters çevrilir)
+                double ySpeed = -MathUtil.applyDeadband(primary.getLeftY(), OIConstants.driveDeadband);
+                double xSpeed = -MathUtil.applyDeadband(primary.getLeftX(), OIConstants.driveDeadband);
+                double rot = -MathUtil.applyDeadband(primary.getRightX(), OIConstants.driveDeadband);
+
+                // B butonuna basılıyorsa hızı %50'ye düşür
+                /*if (primary.b().getAsBoolean()) {
+                    ySpeed *= slowFactor;
+                    xSpeed *= slowFactor;
+                    rot *= slowFactor;
+                }*/
+
+                // Sürüşü başlat (fieldRelative: true -> Saha odaklı sürüş)
+                drivetrain.drive(ySpeed, xSpeed, rot, true);
+            },
+            drivetrain));
+
   }
 
 
@@ -79,27 +94,18 @@ public class RobotContainer {
     // X butonuna basılı tutarken tekerlekleri X şeklinde kilitle (Defans modu)
     primary.x().whileTrue(new RunCommand(() -> drivetrain.setX(), drivetrain));
 
-    primary.rightTrigger().whileTrue(new RunCommand(() -> drivetrain.driveAtTarget(-MathUtil.applyDeadband(primary.getLeftY(),0.1), -MathUtil.applyDeadband(primary.getLeftX(), 0.1)), drivetrain));
-    primary.rightBumper().whileTrue(new RunCommand(() -> drivetrain.lockFront(-MathUtil.applyDeadband(primary.getLeftY(),0.1), -MathUtil.applyDeadband(primary.getLeftX(), 0.1)), drivetrain));
-    primary.leftBumper().whileTrue(new RunCommand(() -> drivetrain.lockBack(-MathUtil.applyDeadband(primary.getLeftY(),0.1), -MathUtil.applyDeadband(primary.getLeftX(), 0.1)), drivetrain));
+    primary.rightBumper().whileTrue(new RunCommand(() -> drivetrain.driveAtTarget(-MathUtil.applyDeadband(primary.getLeftY(),0.1), -MathUtil.applyDeadband(primary.getLeftX(), 0.1)), drivetrain));
+    //primary.rightBumper().whileTrue(new RunCommand(() -> drivetrain.lockFront(-MathUtil.applyDeadband(primary.getLeftY(),0.1), -MathUtil.applyDeadband(primary.getLeftX(), 0.1)), drivetrain));
+    primary.leftBumper().onTrue(new InstantCommand(() -> intakeSubsystem.intakeToggle(), intakeSubsystem));
 
-    //primary.a().toggleOnTrue(new RunCommand(() -> shooter.setHoodAngle(50), shooter));
+    // Sadece onTrue kullanıyoruz. Bas-çek yapınca toggle çalışır.
+    primary.povUp().onTrue(new InstantCommand(() -> climbSubsystem.climbToggle(), climbSubsystem));
+    primary.povDown().onTrue(new InstantCommand(() -> intakeSubsystem.closeIntake(), intakeSubsystem)).onFalse(new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
 
-    //primary.leftTrigger().whileTrue(new RunCommand(() -> shooterSubsystem.shoot(), shooterSubsystem));
-
-    //primary.y().toggleOnTrue(new RunCommand(() -> climbSubsystem.climbForward(), climbSubsystem)).onFalse(new RunCommand(() -> climbSubsystem.climbReverse(), climbSubsystem));
-
-    // primary.y().onTrue(new InstantCommand(() -> climbSubsystem.climbForward(), climbSubsystem));
-
-    // primary.a().onTrue(new InstantCommand(() -> climbSubsystem.climbReverse(), climbSubsystem));
-
-// Sadece onTrue kullanıyoruz. Bas-çek yapınca toggle çalışır.
-primary.povUp().onTrue(new InstantCommand(() -> climbSubsystem.climbToggle(), climbSubsystem));
-primary.povDown().onTrue(new InstantCommand(() -> intakeSubsystem.closeIntake(), intakeSubsystem)).onFalse(new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
-
-    primary.leftTrigger().whileTrue(
+    primary.rightTrigger().whileTrue(
                 new ParallelCommandGroup(
                   new RunCommand(() -> {shooter.shoot(); shooter.enablePID();}, shooter),
+                  new InstantCommand(() -> climbSubsystem.compressorDisable(), climbSubsystem),
                   new WaitUntilCommand(() -> shooter.isReady())
                     .andThen(new RunCommand(() -> feederSubsystem.feedShooter(), feederSubsystem))
                     
@@ -109,24 +115,14 @@ primary.povDown().onTrue(new InstantCommand(() -> intakeSubsystem.closeIntake(),
                   shooter.stopShooter();
                   shooter.disablePID();
                   feederSubsystem.stopMotors();
-                })); 
+                }));
 
-    /*primary.leftTrigger().whileTrue(
-        new ParallelCommandGroup(
-            // Sadece kontrolü aktif et, gerisini subsystem'in periodic'i halleder
-            new RunCommand(() -> shooter.enableAutoControl(), shooter), 
-            
-            // Hazır olana kadar bekle ve besleyiciyi çalıştır
-            new WaitUntilCommand(() -> shooter.isReady())
-                .andThen(new RunCommand(() -> feederSubsystem.feedShooter(), feederSubsystem))
-        )
-    ).onFalse(new InstantCommand(() -> {
-        shooter.disableAutoControl(); // Her şeyi subsystem içinden durdurur
-        feederSubsystem.stopMotors();
-    }));*/
+    primary.leftTrigger().onTrue(new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
+    primary.leftTrigger().whileTrue(new InstantCommand(() -> intakeSubsystem.runIntake(), intakeSubsystem));
 
-    //primary.leftTrigger().whileTrue(new InstantCommand(() -> shooter.enablePID(), shooter)).onFalse(new InstantCommand(() -> shooter.disablePID(), shooter));
-    
+    primary.b().onTrue(new InstantCommand(() -> climbSubsystem.compressorToggle(), climbSubsystem));
+
+    primary.a().onTrue(new InstantCommand(() -> shooter.toggleShooter(), shooter));
   }
 
   public Command getAutonomousCommand() {

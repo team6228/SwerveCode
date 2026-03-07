@@ -30,7 +30,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private final SparkMax follower2 = new SparkMax(ShooterConstants.follower2NeoCanID, MotorType.kBrushless);
     private final SparkClosedLoopController shooterPID;
 
-    private final VictorSP hoodMotor = new VictorSP(ShooterConstants.hoodMotorPort); 
+    private final VictorSP hoodMotor = new VictorSP(ShooterConstants.hoodMotorPWM); 
     private final AnalogPotentiometer hoodPot = new AnalogPotentiometer(ShooterConstants.hoodPotPort, ShooterConstants.hoodPotRange, ShooterConstants.hoodPotOffset); // Analog 0
     
     private final DriveTrain m_driveTrain; 
@@ -42,6 +42,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private double targetAngle = 0;
     private double targetRPM = 0;
+
+      
     
 
     public ShooterSubsystem(DriveTrain driveTrain) {
@@ -136,6 +138,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void stopShooter() {
+          
         shooterPID.setSetpoint(0, SparkMax.ControlType.kVelocity);
     }
 
@@ -149,5 +152,8 @@ public class ShooterSubsystem extends SubsystemBase {
         
         return isShooterReady && isHoodReady;
     }
+
+    
+
 }
 

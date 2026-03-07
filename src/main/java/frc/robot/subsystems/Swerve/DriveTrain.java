@@ -269,19 +269,19 @@ public class DriveTrain extends SubsystemBase{
         });
     
         
-        /*SmartDashboard.putNumber("fl velocity", frontLeft.getVelocity());
-        SmartDashboard.putNumber("fr velocity", frontRight.getVelocity());
-        SmartDashboard.putNumber("bl velocity", backLeft.getVelocity());
-        SmartDashboard.putNumber("br velocity", backRight.getVelocity());
+        // SmartDashboard.putNumber("fl velocity", frontLeft.getVelocity());
+        // SmartDashboard.putNumber("fr velocity", frontRight.getVelocity());
+        // SmartDashboard.putNumber("bl velocity", backLeft.getVelocity());
+        // SmartDashboard.putNumber("br velocity", backRight.getVelocity());
 
         
-        // SmartDashboard üzerinden tekerlek açılarını ve gyro bilgisini takip et
-        SmartDashboard.putNumber("FL Angle Deg", Math.toDegrees(frontLeft.getAngle()));
-        SmartDashboard.putNumber("FR Angle Deg", Math.toDegrees(frontRight.getAngle()));
-        SmartDashboard.putNumber("RL Angle Deg", Math.toDegrees(backLeft.getAngle()));
-        SmartDashboard.putNumber("RR Angle Deg", Math.toDegrees(backRight.getAngle()));
+        // // SmartDashboard üzerinden tekerlek açılarını ve gyro bilgisini takip et
+        // SmartDashboard.putNumber("FL Angle Deg", Math.toDegrees(frontLeft.getAngle()));
+        // SmartDashboard.putNumber("FR Angle Deg", Math.toDegrees(frontRight.getAngle()));
+        // SmartDashboard.putNumber("RL Angle Deg", Math.toDegrees(backLeft.getAngle()));
+        // SmartDashboard.putNumber("RR Angle Deg", Math.toDegrees(backRight.getAngle()));
         SmartDashboard.putNumber("Robot Heading", getHeading());
-    */
+    
     }
 
     public void drive(double xSpeed, double ySpeed, double rotation, boolean fieldRelative) {

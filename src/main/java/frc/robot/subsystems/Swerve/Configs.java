@@ -17,7 +17,8 @@ public class Configs {
 
         static {
             // --- Drive Ayarları (NEO) ---
-            double driveFactor = ModuleConstants.wheelDiameterMeters * Math.PI
+            double
+             driveFactor = ModuleConstants.wheelDiameterMeters * Math.PI
                                    / ModuleConstants.drivingMotorReduction;
             double driveVelocityFeedForward = 1 / ModuleConstants.driveWheelFreeSpeedRps;
 

@@ -92,7 +92,7 @@ public final class Constants {
     public static final int follower1NeoCanID = 9;
     public static final int follower2NeoCanID = 10;
 
-    public static final int hoodMotorPort = 1;
+    public static final int hoodMotorPWM = 1;
     public static final int hoodPotPort = 1;
     public static final int hoodPotRange = 270;
     public static final double hoodPotOffset = 28.5;
@@ -100,8 +100,19 @@ public final class Constants {
   }
 
   public static final class FeederConstants {
-    public static final int feederMotor = 0;
-    public static final int indexerMotor = 2;
+    public static final int indexerMotorPWM = 2;
 
   }
+
+  public static final class IntakeConstants {
+    public static final int intakeMotorPWM = 0;
+    public static final int intakeForwardChannel = 0;
+    public static final int intakeReverseChannel = 1;
+  }
+
+  public static final class ClimbConstants {
+    public static final int climbForwardChannel = 2;
+    public static final int climbReverseChannel = 3;
+  }
 }
+

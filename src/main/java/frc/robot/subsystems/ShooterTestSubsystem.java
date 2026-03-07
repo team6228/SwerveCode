@@ -34,6 +34,8 @@ public class ShooterTestSubsystem extends SubsystemBase {
     private final InterpolatingDoubleTreeMap velocityTable = new InterpolatingDoubleTreeMap();
     private double targetRPM = 0;
 
+    private boolean isShooterRunning = false; 
+
 
     // -------------------------------------------------------------------------
     // Swerve
@@ -256,6 +258,7 @@ public class ShooterTestSubsystem extends SubsystemBase {
     }
 
     public void stopShooter() {
+        isShooterRunning = false; 
         //shooterPID.setSetpoint(0, SparkMax.ControlType.kVelocity);
         masterNeo.set(0);
     }
@@ -268,5 +271,18 @@ public class ShooterTestSubsystem extends SubsystemBase {
         boolean isHoodReady = Math.abs(currentPotValue - getTargetAngle()) < 1.5;
         
         return isShooterReady && isHoodReady;
+    }
+
+    public void toggleShooter() {
+        isShooterRunning = !isShooterRunning; // Durumu tersine çevir
+
+        if (isShooterRunning) {
+            // Hedef RPM'e sür
+            shooterPID.setSetpoint(targetRPM, SparkMax.ControlType.kVelocity);
+        } else {
+            // Motorları durdur
+            shooterPID.setSetpoint(0, SparkMax.ControlType.kVelocity);
+            // Alternatif olarak masterNeo.stopMotor(); da diyebilirsin
+        }
     }
 }
