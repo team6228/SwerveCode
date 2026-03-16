@@ -9,8 +9,14 @@ import frc.robot.Constants.IntakeConstants;
 
 public class IntakeSubsystem extends SubsystemBase{
 
-    private final DoubleSolenoid intakeSolenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, IntakeConstants.intakeForwardChannel, IntakeConstants.intakeReverseChannel);
+    private final DoubleSolenoid intakeSolenoid = new DoubleSolenoid(
+        PneumaticsModuleType.CTREPCM, 
+        IntakeConstants.intakeForwardChannel, 
+        IntakeConstants.intakeReverseChannel
+    );
+
     private final PWMSparkMax intakeMotor = new PWMSparkMax(IntakeConstants.intakeMotorPWM);
+
     public IntakeSubsystem(){
 
     }
@@ -22,7 +28,6 @@ public class IntakeSubsystem extends SubsystemBase{
 
     public void openIntake(){
         intakeSolenoid.set(DoubleSolenoid.Value.kForward);
-
     }
 
     public void closeIntake(){
@@ -38,6 +43,10 @@ public class IntakeSubsystem extends SubsystemBase{
     }
 
     public void runIntake(){
-        intakeMotor.set(1);
+        intakeMotor.set(0.8);
+    }
+
+    public void stopIntake(){
+        intakeMotor.set(0);
     }
 }

@@ -45,6 +45,9 @@ public class RobotContainer {
 
 
   public RobotContainer() {
+
+    drivetrain.setQuestNav(questNav);
+
     NamedCommands.registerCommand("Open Intake", new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
     NamedCommands.registerCommand("Close Intake", new InstantCommand(() -> intakeSubsystem.closeIntake(), intakeSubsystem));
     NamedCommands.registerCommand("Open Climb", new InstantCommand(() -> climbSubsystem.climbForward(), climbSubsystem));
@@ -117,8 +120,9 @@ public class RobotContainer {
                   feederSubsystem.stopMotors();
                 }));
 
-    primary.leftTrigger().onTrue(new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
+   
     primary.leftTrigger().whileTrue(new InstantCommand(() -> intakeSubsystem.runIntake(), intakeSubsystem));
+    primary.leftTrigger().onFalse(new InstantCommand(() -> intakeSubsystem.stopIntake(), intakeSubsystem));
 
     primary.b().onTrue(new InstantCommand(() -> climbSubsystem.compressorToggle(), climbSubsystem));
 

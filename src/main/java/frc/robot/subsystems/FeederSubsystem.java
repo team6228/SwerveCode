@@ -3,6 +3,7 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
@@ -15,16 +16,18 @@ public class FeederSubsystem extends SubsystemBase{
     private final VictorSP indexerMotor = new VictorSP(FeederConstants.indexerMotorPWM);
 
     private final SparkMax feedMotor = new SparkMax(12, MotorType.kBrushless);
+    SparkMaxConfig config = new SparkMaxConfig();
 
     
     public FeederSubsystem(){
-        indexerMotor.setInverted(true);
+        indexerMotor.setInverted(false);
+        
     }
     
 
     public void feedShooter(){
-        feedMotor.set(-1);
-        indexerMotor.set(0.6);
+        feedMotor.set(1);
+        indexerMotor.set(1);
     }
 
     public void reverseFeed(){

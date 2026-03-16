@@ -23,8 +23,8 @@ public class ShooterTestSubsystem extends SubsystemBase {
     // -------------------------------------------------------------------------
     // Donanım
     // -------------------------------------------------------------------------
-    private final AnalogInput hoodPotInput = new AnalogInput(2);  // Analog port 2
-    private final VictorSP    hoodMotor    = new VictorSP(1);     // PWM port 1
+    private final AnalogInput hoodPotInput = new AnalogInput(ShooterConstants.hoodPotPort);  // Analog port 2
+    private final VictorSP    hoodMotor    = new VictorSP(ShooterConstants.hoodMotorPWM);     // PWM port 1
 
 
     private final SparkMax masterNeo = new SparkMax(ShooterConstants.masterNeoCanID, MotorType.kBrushless);
@@ -51,7 +51,7 @@ public class ShooterTestSubsystem extends SubsystemBase {
     // -------------------------------------------------------------------------
     // Potansiyometre Sabitleri
     // -------------------------------------------------------------------------
-    private static final double kMinPotValue     = 4.0;
+    private static final double kMinPotValue     = 4.0; 
     private static final double kMaxPotValue     = 4007.0;
     private static final double kPotTotalDegrees = 270.0;
 
@@ -105,6 +105,8 @@ public class ShooterTestSubsystem extends SubsystemBase {
             
         
         config.closedLoop.feedForward.kV(0.000203);
+
+        config.closedLoopRampRate(0.1);
         
         masterNeo.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         
