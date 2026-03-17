@@ -165,36 +165,36 @@ public class DriveTrain extends SubsystemBase {
 
     /** Target-tracking drive: auto-rotates to face a field-fixed point. */
     public void driveAtTarget(double xSpeed, double ySpeed) {
-    Pose2d currentPose = getPose();
-    double dx = targetLock.targetX - currentPose.getX();
-    double dy = targetLock.targetY - currentPose.getY();
+        Pose2d currentPose = getPose();
+        double dx = targetLock.targetX - currentPose.getX();
+        double dy = targetLock.targetY - currentPose.getY();
 
-    double angleToTarget = Math.toDegrees(Math.atan2(dy, dx));
+        double angleToTarget = Math.toDegrees(Math.atan2(dy, dx));
 
-    // Field-relative ySpeed'i robot-local sağ/sol harekete çevir
-    double robotHeadingRad = currentPose.getRotation().getRadians();
-    double localY = -xSpeed * Math.sin(robotHeadingRad) 
-                  +  ySpeed * Math.cos(robotHeadingRad);
+        // Field-relative ySpeed'i robot-local sağ/sol harekete çevir
+        double robotHeadingRad = currentPose.getRotation().getRadians();
+        double localY = -xSpeed * Math.sin(robotHeadingRad) 
+                    +  ySpeed * Math.cos(robotHeadingRad);
 
-    // Sağa giderken (localY > 0) sola bak → negatif offset
-    // Sola giderken (localY < 0) sağa bak → pozitif offset
-    double lateralOffset = MathUtil.clamp(-localY * 2.0, -2.0, 2.0);
+        // Sağa giderken (localY > 0) sola bak → negatif offset
+        // Sola giderken (localY < 0) sağa bak → pozitif offset
+        double lateralOffset = MathUtil.clamp(-localY * 2.0, -2.0, 2.0);
 
-    double angleError = Math.IEEEremainder(getHeading() - (angleToTarget + lateralOffset), 360);
+        double angleError = Math.IEEEremainder(getHeading() - (angleToTarget + lateralOffset), 360);
 
-    double rotOutput = (Math.abs(angleError) < 0.5)
-        ? 0
-        : MathUtil.clamp(turnPID.calculate(angleError, 0), -0.5, 0.5);
+        double rotOutput = (Math.abs(angleError) < 0.5)
+            ? 0
+            : MathUtil.clamp(turnPID.calculate(angleError, 0), -0.5, 0.5);
 
-    desaturateAndSet(DriveContants.kDriveKinematics.toSwerveModuleStates(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            xSpeed * DriveContants.maxSpeedMetersPerSecond,
-            ySpeed * DriveContants.maxSpeedMetersPerSecond,
-            rotOutput * DriveContants.maxAngularSpeed,
-            getRotation2d()
-        )
-    ));
-}
+        desaturateAndSet(DriveContants.kDriveKinematics.toSwerveModuleStates(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                xSpeed * DriveContants.maxSpeedMetersPerSecond,
+                ySpeed * DriveContants.maxSpeedMetersPerSecond,
+                rotOutput * DriveContants.maxAngularSpeed,
+                getRotation2d()
+            )
+        ));
+    }
 
     /** Lock robot heading to face forward (0°). */
     public void lockFront(double xSpeed, double ySpeed) {

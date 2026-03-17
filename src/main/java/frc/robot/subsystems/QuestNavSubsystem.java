@@ -37,19 +37,17 @@ public class QuestNavSubsystem extends SubsystemBase {
     // ---------------- TRACKING ----------------
     private boolean questTracking = false;
 
-    private boolean questConnected = false;
-
     // ---------------- TRANSFORM ----------------
     // Quest arkada ve arkaya bakıyor (yaw = PI)
     private static final Transform3d ROBOT_TO_QUEST =
         new Transform3d(
-            new Translation3d(0.30, -0.15, 0.40),
+            new Translation3d(0.30, 0.15, 0.40),
             new Rotation3d(0.0, 0.0, Math.PI/2)
         );
 
     // ---------------- STD DEVS ----------------
     private static final Matrix<N3, N1> QUEST_STD_DEVS =
-        VecBuilder.fill(0.02, 0.02, 0.035);
+        VecBuilder.fill(0.05, 0.05, 0.07);
 
     // ---------------- CONSTRUCTOR ----------------
     public QuestNavSubsystem(DriveTrain driveTrain) {
@@ -136,7 +134,8 @@ public class QuestNavSubsystem extends SubsystemBase {
     /** navX.reset() MUADİLİ */
     public void zeroPose() {
         if (hasPose) {
-            offset = lastRawPose;
+            //offset = lastRawPose;
+            offset = lastRawPose.relativeTo(swerveDrive.getPose());
         }
     }
 
@@ -146,9 +145,5 @@ public class QuestNavSubsystem extends SubsystemBase {
 
     public int getBatteryPercent() {
         return questBatteryPercent;
-    }
-
-    public boolean isConnected(){
-        return questConnected;
     }
 }
