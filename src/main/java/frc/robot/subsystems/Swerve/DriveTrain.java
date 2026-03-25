@@ -1,5 +1,7 @@
 package frc.robot.subsystems.Swerve;
 
+import java.util.Optional;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -49,6 +51,9 @@ public class DriveTrain extends SubsystemBase {
 
     private QuestNavSubsystem questNav;
 
+    Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
+
+
     // ── Telemetry ─────────────────────────────────────────────────────────────
     private final Field2d m_field = new Field2d();
 
@@ -82,6 +87,7 @@ public class DriveTrain extends SubsystemBase {
 
         colorChooser.setDefaultOption("RED", getName());
         colorChooser.addOption("BLUE", getName());
+        SmartDashboard.putData("Color Chooser",colorChooser);
 
         zeroHeading();
 
@@ -143,7 +149,12 @@ public class DriveTrain extends SubsystemBase {
             backRight.getState()
         });
 
+        String allianceStr = alliance.isPresent() ? alliance.get().toString() : "UNKNOWN";
+
+        SmartDashboard.putString("Alliance", allianceStr);
         SmartDashboard.putNumber("Robot Heading", getHeading());
+        SmartDashboard.putString("Robot Color", allianceSelector());
+        
     }
 
     // ── Drive methods ─────────────────────────────────────────────────────────
@@ -164,6 +175,10 @@ public class DriveTrain extends SubsystemBase {
         desaturateAndSet(DriveContants.kDriveKinematics.toSwerveModuleStates(speeds));
     }
 
+    public Pose2d getResetPose(){
+        return autoPosChooser.getSelected();
+    }
+
     /** Robot-relative drive used by PathPlanner. */
     public void driveRobotRelative(ChassisSpeeds speeds) {
         desaturateAndSet(DriveContants.kDriveKinematics.toSwerveModuleStates(speeds));
@@ -180,11 +195,10 @@ public class DriveTrain extends SubsystemBase {
         double targetX;
         double targetY;
 
-        if(colorChooser.getSelected() == "RED"){
+        if (alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red) {
             targetX = 11.898000;
             targetY = 4.013000;
-        }
-        else{
+        } else {
             targetX = 4.625594;
             targetY = 4.034536;
         }

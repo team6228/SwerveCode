@@ -31,7 +31,7 @@ public class FeederSubsystem extends SubsystemBase{
     }
 
     public void reverseFeed(){
-        feedMotor.set(0.5);
+        feedMotor.set(1);
         indexerMotor.set(-0.5);
     }
 

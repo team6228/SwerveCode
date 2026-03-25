@@ -4,7 +4,7 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.LedSubsystem;
+//import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.QuestNavSubsystem;
 import frc.robot.subsystems.ShooterTestSubsystem;
 import frc.robot.subsystems.Swerve.DriveTrain;
@@ -33,7 +33,7 @@ public class RobotContainer {
     private final ClimbSubsystem      climbSubsystem  = new ClimbSubsystem();
     private final IntakeSubsystem     intakeSubsystem = new IntakeSubsystem();
     private final ShooterTestSubsystem shooter        = new ShooterTestSubsystem(drivetrain);
-    private final LedSubsystem ledSubsystem = new LedSubsystem();
+    //private final LedSubsystem ledSubsystem = new LedSubsystem(drivetrain, questNav, shooter);
 
     public static final CommandXboxController primary = new CommandXboxController(OIConstants.primaryPort);
 
@@ -82,7 +82,9 @@ public class RobotContainer {
 
         NamedCommands.registerCommand("StopShooter", 
             new InstantCommand(() -> shooter.stopShooter(), shooter));
-
+        
+        NamedCommands.registerCommand("ResetPose", 
+            new InstantCommand(() -> drivetrain.resetOdometry(drivetrain.getResetPose()), drivetrain));
         configureBindings();
 
         autoChooser = AutoBuilder.buildAutoChooser();
@@ -121,10 +123,7 @@ public class RobotContainer {
                 () -> drivetrain.driveAtTarget(
                     -MathUtil.applyDeadband(primary.getLeftY(), 0.1),
                     -MathUtil.applyDeadband(primary.getLeftX(), 0.1)),
-                drivetrain),
-            new RunCommand(
-                () -> shooter.setDynamicTarget(shooter.getDynamicShotParameters()),
-                shooter)
+                drivetrain)
         ))
         .onFalse(new InstantCommand(() -> {
             shooter.stopShooter();
@@ -180,15 +179,19 @@ public class RobotContainer {
         // ── A: Shooter toggle ─────────────────────────────────────────────────
         primary.a().onTrue(new InstantCommand(() -> shooter.toggleShooter(), shooter));
 
-        /*primary.y().whileTrue(new RunCommand(() -> {
-                shooter.setHoodAngle(20);
-                shooter.setMotorRPM(3500);
+        primary.y().whileTrue(new RunCommand(() -> {
+                shooter.setShooterSpesific();
             }, 
             shooter
-        ));*/
+        ));
     }
 
     public Command getAutonomousCommand() {
+        
         return autoChooser.getSelected();
+    }
+
+    public DriveTrain getDriveTrain(){
+        return drivetrain;
     }
 }

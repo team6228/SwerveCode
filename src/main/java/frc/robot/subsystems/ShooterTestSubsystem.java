@@ -36,6 +36,8 @@ public class ShooterTestSubsystem extends SubsystemBase {
     private final SparkClosedLoopController shooterPID;
     private final InterpolatingDoubleTreeMap velocityTable = new InterpolatingDoubleTreeMap();
 
+    
+
     //private final FeederSubsystem feeder = new FeederSubsystem();
 
     // -------------------------------------------------------------------------
@@ -257,6 +259,12 @@ public class ShooterTestSubsystem extends SubsystemBase {
 
     /** Statik mesafeye göre hesaplanan targetRPM ile shooter'ı çalıştırır. */
     public void shoot() {
+        
+        isShooterRunning = true;  // ← EKLENDİ: bayrak güncelleniyor
+        shooterPID.setSetpoint(targetRPM, SparkMax.ControlType.kVelocity);
+    }
+
+    public void shootWithTimer() {
         isShooterRunning = true;  // ← EKLENDİ: bayrak güncelleniyor
         shooterPID.setSetpoint(targetRPM, SparkMax.ControlType.kVelocity);
     }
@@ -429,6 +437,11 @@ public class ShooterTestSubsystem extends SubsystemBase {
             this.targetHoodAngle = targetHoodAngle;
             this.targetRPM       = targetRPM;
         }
+    }
+
+    public void setShooterSpesific(){
+        hoodPID.setSetpoint(15.70);
+        shooterPID.setSetpoint(2500, SparkMax.ControlType.kVelocity);
     }
 }
 

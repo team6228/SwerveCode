@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+/*package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
@@ -12,9 +12,9 @@ public class LedSubsystem extends SubsystemBase{
     //private final AddressableLED led = new AddressableLED(LedConstants.kLEDPwmPort);
     //private final AddressableLEDBuffer buf = new AddressableLEDBuffer(LedConstants.kLedLenght);
 
-    private final DriveTrain drivetrain = new DriveTrain();
-    private final QuestNavSubsystem questNav    = new QuestNavSubsystem(drivetrain); 
-    private final ShooterTestSubsystem shooter = new ShooterTestSubsystem(drivetrain);
+    private final DriveTrain drivetrain;
+    private final QuestNavSubsystem questNav; 
+    private final ShooterTestSubsystem shooter;
 
     //private LedMode mode = LedMode.IDLE;
     private int tick = 0;
@@ -26,7 +26,11 @@ public class LedSubsystem extends SubsystemBase{
     private final AddressableLED led;
     private final AddressableLEDBuffer buffer;
 
-    public LedSubsystem() {
+    public LedSubsystem(DriveTrain m_driveTrain, QuestNavSubsystem m_questNav,
+                        ShooterTestSubsystem m_shooter) {
+        this.drivetrain = m_driveTrain;
+        this.questNav = m_questNav;
+        this.shooter = m_shooter;
         drivetrain.setQuestNav(questNav);
 
         led = new AddressableLED(LedConstants.kLEDDioPort);
@@ -71,3 +75,4 @@ public class LedSubsystem extends SubsystemBase{
         }
     }
 }
+*/
