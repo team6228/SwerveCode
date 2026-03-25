@@ -118,8 +118,8 @@ public final class Constants {
   public static final class targetLock {
     public static final double targetXBlue = 4.625594;
     public static final double targetYBlue = 4.034536;
-    public static final double targetXRed = 4.625594;
-    public static final double targetYRed = 4.034536;
+    public static final double targetXRed = 11.898000;
+    public static final double targetYRed = 4.013000;
   }
 
   public static final class LedConstants {

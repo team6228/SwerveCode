@@ -32,7 +32,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveContants;
-import frc.robot.Constants.targetLock;
 import frc.robot.subsystems.QuestNavSubsystem;
 
 public class DriveTrain extends SubsystemBase {
@@ -51,7 +50,8 @@ public class DriveTrain extends SubsystemBase {
 
     private QuestNavSubsystem questNav;
 
-    Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
+    // Alliance her kullanımda dinamik okunmalı — constructor'da cached değer
+    // robot başlarken DriverStation bağlı olmadığından her zaman empty dönerdi.
 
 
     // ── Telemetry ─────────────────────────────────────────────────────────────
@@ -70,7 +70,6 @@ public class DriveTrain extends SubsystemBase {
     // ── Auto pose chooser ─────────────────────────────────────────────────────
     private final SendableChooser<Pose2d> autoPosChooser = new SendableChooser<>();
 
-    private final SendableChooser<String> colorChooser = new  SendableChooser<>();
 
     // ─────────────────────────────────────────────────────────────────────────
     public DriveTrain() {
@@ -78,16 +77,12 @@ public class DriveTrain extends SubsystemBase {
         autoPosChooser.addOption("Left (Blue)",       new Pose2d(3.5,  5.1, Rotation2d.fromDegrees(0)));
         autoPosChooser.addOption("Right (Blue)",      new Pose2d(3.5,  2.9, Rotation2d.fromDegrees(0)));
 
-        autoPosChooser.addOption("Center (Red)",       new Pose2d(13.018,  4.041, Rotation2d.fromDegrees(0)));
-        autoPosChooser.addOption("Right (Red)",      new Pose2d(13.024,  2.9, Rotation2d.fromDegrees(0)));
-        autoPosChooser.addOption("Left (Red)",       new Pose2d(13.013,  5.084, Rotation2d.fromDegrees(0)));
+        autoPosChooser.addOption("Center (Red)",       new Pose2d(13.018,  4.041, Rotation2d.fromDegrees(180)));
+        autoPosChooser.addOption("Right (Red)",      new Pose2d(13.024,  2.9, Rotation2d.fromDegrees(180)));
+        autoPosChooser.addOption("Left (Red)",       new Pose2d(13.013,  5.084, Rotation2d.fromDegrees(180)));
         SmartDashboard.putData("Auto Start Pose", autoPosChooser);
         SmartDashboard.putData("Update Pose",     new InstantCommand(this::resetPoseToSelected).ignoringDisable(true));
         SmartDashboard.putData("Field",           m_field);
-
-        colorChooser.setDefaultOption("RED", getName());
-        colorChooser.addOption("BLUE", getName());
-        SmartDashboard.putData("Color Chooser",colorChooser);
 
         zeroHeading();
 
@@ -149,11 +144,11 @@ public class DriveTrain extends SubsystemBase {
             backRight.getState()
         });
 
+        Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
         String allianceStr = alliance.isPresent() ? alliance.get().toString() : "UNKNOWN";
 
         SmartDashboard.putString("Alliance", allianceStr);
         SmartDashboard.putNumber("Robot Heading", getHeading());
-        SmartDashboard.putString("Robot Color", allianceSelector());
         
     }
 
@@ -184,17 +179,13 @@ public class DriveTrain extends SubsystemBase {
         desaturateAndSet(DriveContants.kDriveKinematics.toSwerveModuleStates(speeds));
     }
 
-    public String allianceSelector() {
-        String x = colorChooser.getSelected();
-        return x;
-    }
-
     public void driveAtTarget(double xSpeed, double ySpeed) {
         // 1. Hedef Koordinatlar
 
         double targetX;
         double targetY;
 
+        Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
         if (alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red) {
             targetX = 11.898000;
             targetY = 4.013000;

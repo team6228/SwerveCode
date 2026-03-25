@@ -7,6 +7,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import java.util.Optional;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,6 +17,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -62,7 +65,7 @@ public class ShooterTestSubsystem extends SubsystemBase {
     // Interpolasyon Tablosu — Mesafe(m) → Hood Açısı(°)
     // -------------------------------------------------------------------------
     private final InterpolatingDoubleTreeMap hoodMap     = new InterpolatingDoubleTreeMap();
-    private final Translation2d kHubLocation;
+    // Hub lokasyonu artık dinamik — alliance bilgisi maç başladıktan sonra gelir
 
     // -------------------------------------------------------------------------
     // Potansiyometre Sabitleri
@@ -91,12 +94,7 @@ public class ShooterTestSubsystem extends SubsystemBase {
     public ShooterTestSubsystem(DriveTrain driveTrain) {
         this.m_driveTrain = driveTrain;
         this.shooterPID   = masterNeo.getClosedLoopController();
-        if(driveTrain.allianceSelector() == "RED"){
-            kHubLocation = new Translation2d(targetLock.targetXRed, targetLock.targetYRed);
-        }
-        else{
-            kHubLocation = new Translation2d(targetLock.targetXBlue, targetLock.targetYBlue);
-        }
+        // Hub lokasyonu artık getHubLocation() ile dinamik okunuyor
         hoodMotor.setInverted(true);
         hoodPID.setTolerance(kAngleTolerance);
 
@@ -158,9 +156,17 @@ public class ShooterTestSubsystem extends SubsystemBase {
         return angle;
     }
 
+    private Translation2d getHubLocation() {
+        Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
+        if (alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red) {
+            return new Translation2d(targetLock.targetXRed, targetLock.targetYRed);
+        }
+        return new Translation2d(targetLock.targetXBlue, targetLock.targetYBlue);
+    }
+
     public double getDistanceToHub() {
         Pose2d currentPose = m_driveTrain.getPose();
-        return currentPose.getTranslation().getDistance(kHubLocation);
+        return currentPose.getTranslation().getDistance(getHubLocation());
     }
 
     public double getTargetAngle() {
@@ -321,8 +327,8 @@ public class ShooterTestSubsystem extends SubsystemBase {
         // ------------------------------------------------------------------
         Pose2d currentPose = m_driveTrain.getPose();
 
-        double dx             = kHubLocation.getX() - currentPose.getX();
-        double dy             = kHubLocation.getY() - currentPose.getY();
+        double dx             = getHubLocation().getX() - currentPose.getX();
+        double dy             = getHubLocation().getY() - currentPose.getY();
         double staticDistance = Math.hypot(dx, dy);
 
         // ------------------------------------------------------------------
