@@ -106,8 +106,8 @@ public final class Constants {
 
   public static final class IntakeConstants {
     public static final int intakeMotorPWM = 0;
-    public static final int intakeForwardChannel = 1;
-    public static final int intakeReverseChannel = 0;
+    public static final int intakeForwardChannel = 0;
+    public static final int intakeReverseChannel = 1;
   }
 
   public static final class ClimbConstants {
@@ -116,8 +116,15 @@ public final class Constants {
   }
 
   public static final class targetLock {
-    public static final double targetX = 4.625594;
-    public static final double targetY = 4.034536;
+    public static final double targetXBlue = 4.625594;
+    public static final double targetYBlue = 4.034536;
+    public static final double targetXRed = 4.625594;
+    public static final double targetYRed = 4.034536;
+  }
+
+  public static final class LedConstants {
+    public static final int kLEDPwmPort = 5;
+    public static final int kLedLenght = 8;
   }
 }
 

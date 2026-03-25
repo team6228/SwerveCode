@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "New New Path"
+            "pathName": "aLeft"
           }
         },
         {
@@ -20,6 +20,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Blue",
   "choreoAuto": false
 }

@@ -49,8 +49,6 @@ public class DriveTrain extends SubsystemBase {
 
     private QuestNavSubsystem questNav;
 
-    
-
     // ── Telemetry ─────────────────────────────────────────────────────────────
     private final Field2d m_field = new Field2d();
 
@@ -67,15 +65,23 @@ public class DriveTrain extends SubsystemBase {
     // ── Auto pose chooser ─────────────────────────────────────────────────────
     private final SendableChooser<Pose2d> autoPosChooser = new SendableChooser<>();
 
+    private final SendableChooser<String> colorChooser = new  SendableChooser<>();
+
     // ─────────────────────────────────────────────────────────────────────────
     public DriveTrain() {
-        // Register chooser options ONCE (not every periodic tick!)
-        autoPosChooser.setDefaultOption("Center",        new Pose2d(3.522, 4.0,  new Rotation2d(0)));
-        autoPosChooser.addOption("Left (Red)",           new Pose2d(15.0,  7.0,  Rotation2d.fromDegrees(0)));
-        autoPosChooser.addOption("Right (Red)",          new Pose2d(15.0,  1.5,  Rotation2d.fromDegrees(0)));
+        autoPosChooser.setDefaultOption("Center (Blue)",    new Pose2d(3.5, 4.0, new Rotation2d(0)));
+        autoPosChooser.addOption("Left (Blue)",       new Pose2d(3.5,  5.1, Rotation2d.fromDegrees(0)));
+        autoPosChooser.addOption("Right (Blue)",      new Pose2d(3.5,  2.9, Rotation2d.fromDegrees(0)));
+
+        autoPosChooser.addOption("Center (Red)",       new Pose2d(13.018,  4.041, Rotation2d.fromDegrees(0)));
+        autoPosChooser.addOption("Right (Red)",      new Pose2d(13.024,  2.9, Rotation2d.fromDegrees(0)));
+        autoPosChooser.addOption("Left (Red)",       new Pose2d(13.013,  5.084, Rotation2d.fromDegrees(0)));
         SmartDashboard.putData("Auto Start Pose", autoPosChooser);
         SmartDashboard.putData("Update Pose",     new InstantCommand(this::resetPoseToSelected).ignoringDisable(true));
         SmartDashboard.putData("Field",           m_field);
+
+        colorChooser.setDefaultOption("RED", getName());
+        colorChooser.addOption("BLUE", getName());
 
         zeroHeading();
 
@@ -146,9 +152,9 @@ public class DriveTrain extends SubsystemBase {
     public void drive(double xSpeed, double ySpeed, double rotation, boolean fieldRelative) {
         ChassisSpeeds speeds = fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                xSpeed    * DriveContants.maxSpeedMetersPerSecond,
-                ySpeed    * DriveContants.maxSpeedMetersPerSecond,
-                rotation  * DriveContants.maxAngularSpeed,
+                xSpeed   * DriveContants.maxSpeedMetersPerSecond,
+                ySpeed   * DriveContants.maxSpeedMetersPerSecond,
+                rotation * DriveContants.maxAngularSpeed,
                 getRotation2d())
             : new ChassisSpeeds(
                 xSpeed   * DriveContants.maxSpeedMetersPerSecond,
@@ -163,37 +169,135 @@ public class DriveTrain extends SubsystemBase {
         desaturateAndSet(DriveContants.kDriveKinematics.toSwerveModuleStates(speeds));
     }
 
-    /** Target-tracking drive: auto-rotates to face a field-fixed point. */
+    public String allianceSelector() {
+        String x = colorChooser.getSelected();
+        return x;
+    }
+
     public void driveAtTarget(double xSpeed, double ySpeed) {
+        // 1. Hedef Koordinatlar
+
+        double targetX;
+        double targetY;
+
+        if(colorChooser.getSelected() == "RED"){
+            targetX = 11.898000;
+            targetY = 4.013000;
+        }
+        else{
+            targetX = 4.625594;
+            targetY = 4.034536;
+        }
+
         Pose2d currentPose = getPose();
-        double dx = targetLock.targetX - currentPose.getX();
-        double dy = targetLock.targetY - currentPose.getY();
 
-        double angleToTarget = Math.toDegrees(Math.atan2(dy, dx));
+        // 2. Hedef vektörü (field-relative)
+        double dx = targetX - currentPose.getX();
+        double dy = targetY - currentPose.getY();
+        double distanceToTarget = Math.hypot(dx, dy);
 
-        // Field-relative ySpeed'i robot-local sağ/sol harekete çevir
-        double robotHeadingRad = currentPose.getRotation().getRadians();
-        double localY = -xSpeed * Math.sin(robotHeadingRad) 
-                    +  ySpeed * Math.cos(robotHeadingRad);
+        // 3. Robot frame'ine çevir (field -> robot)
+        Rotation2d robotRot = currentPose.getRotation();
 
-        // Sağa giderken (localY > 0) sola bak → negatif offset
-        // Sola giderken (localY < 0) sağa bak → pozitif offset
-        double lateralOffset = MathUtil.clamp(-localY * 2.0, -2.0, 2.0);
+        double localX =  dx * robotRot.getCos() + dy * robotRot.getSin();
+        double localY = -dx * robotRot.getSin() + dy * robotRot.getCos();
 
-        double angleError = Math.IEEEremainder(getHeading() - (angleToTarget + lateralOffset), 360);
+        // -------------------------------------------------
+        // 🔥 GERÇEK ROBOT HIZI (odometriden)
+        // -------------------------------------------------
 
-        double rotOutput = (Math.abs(angleError) < 0.5)
-            ? 0
-            : MathUtil.clamp(turnPID.calculate(angleError, 0), -0.5, 0.5);
+        ChassisSpeeds robotSpeeds = getRobotRelativeSpeeds(); // mevcut gerçek hız
+        // Field-relative'e çevir
+        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+            robotSpeeds, getRotation2d()
+        );
 
-        desaturateAndSet(DriveContants.kDriveKinematics.toSwerveModuleStates(
+        double realVx = fieldSpeeds.vxMetersPerSecond; // field X hızı
+        double realVy = fieldSpeeds.vyMetersPerSecond; // field Y hızı
+        double realSpeed = Math.hypot(realVx, realVy);  // toplam hız (m/s)
+
+        // Robot frame'inde lateral hız (hedefe dik bileşen)
+        double realLocalVx =  realVx * robotRot.getCos() + realVy * robotRot.getSin();
+        double realLocalVy = -realVx * robotRot.getSin() + realVy * robotRot.getCos();
+
+        // -------------------------------------------------
+        // 🔥 HAREKET ALGILAMA (gerçek hıza göre)
+        // -------------------------------------------------
+
+        double movementThreshold = 0.08; // m/s — titreşim eşiği
+        boolean isMoving = realSpeed > movementThreshold;
+
+        // -------------------------------------------------
+        // 🔥 AIM OFFSET HESABI
+        // -------------------------------------------------
+
+        double angleOffset = 0.0;
+
+        if (isMoving && localX > 0.0) { // Hedef önümüzdeyse ve hareket varsa
+
+            // (A) Hıza bağlı lead offset
+            // Hedefe dik (lateral) hareket ediyorsak öne bakmalıyız
+            double kVelocityAim = 3.0; // derece / (m/s)
+            double velocityOffset =
+                MathUtil.clamp(realLocalVy * kVelocityAim, -6.0, 6.0);
+
+            // (B) Uzaklığa bağlı pozisyon offseti
+            // Hedefe yakınken offset azalsın (zaten doğrultudayız)
+            // Uzaktayken biraz daha agresif
+            double kPosAim = 1.2; // derece / metre
+            double distanceFactor = MathUtil.clamp(distanceToTarget / 4.0, 0.0, 1.0);
+            double positionalOffset =
+                MathUtil.clamp(localY * kPosAim * distanceFactor, -5.0, 5.0);
+
+            // (C) Hız büyüklüğüne göre blend — yavaşken offset küçülsün
+            // 0 m/s → 0.0, maxSpeed → 1.0
+            double speedFactor =
+                MathUtil.clamp(realSpeed / DriveContants.maxSpeedMetersPerSecond, 0.0, 1.0);
+
+            angleOffset = (velocityOffset + positionalOffset) * speedFactor;
+        }
+        // isMoving == false → angleOffset = 0.0, direkt hedefe bak
+
+        // 4. Hedef açısı + ofset
+        double angleToTarget =
+            Math.toDegrees(Math.atan2(dy, dx)) + angleOffset;
+
+        // 5. PID ile dönüş
+        double angleError =
+            Math.IEEEremainder(getHeading() - angleToTarget, 360);
+
+        double rotationOutput = turnPID.calculate(angleError, 0);
+        rotationOutput = MathUtil.clamp(rotationOutput, -0.5, 0.5);
+
+        // Deadband (titreşim kesici)
+        if (Math.abs(angleError) < 0.5) {
+            rotationOutput = 0;
+        }
+
+        // 6. Şasi hızları
+        double xVel = xSpeed * DriveContants.maxSpeedMetersPerSecond;
+        double yVel = ySpeed * DriveContants.maxSpeedMetersPerSecond;
+        double rVel = rotationOutput * DriveContants.maxAngularSpeed;
+
+        // 7. Field-relative sürüş
+        ChassisSpeeds chassisSpeeds =
             ChassisSpeeds.fromFieldRelativeSpeeds(
-                xSpeed * DriveContants.maxSpeedMetersPerSecond,
-                ySpeed * DriveContants.maxSpeedMetersPerSecond,
-                rotOutput * DriveContants.maxAngularSpeed,
+                xVel,
+                yVel,
+                rVel,
                 getRotation2d()
-            )
-        ));
+            );
+
+        // 8. Modüllere gönder
+        var states =
+            DriveContants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+
+        SwerveDriveKinematics.desaturateWheelSpeeds(
+            states,
+            DriveContants.maxSpeedMetersPerSecond
+        );
+
+        setModuleStates(states);
     }
 
     /** Lock robot heading to face forward (0°). */
@@ -206,13 +310,10 @@ public class DriveTrain extends SubsystemBase {
         lockAtAngle(xSpeed, ySpeed, 180);
     }
 
-    /**
-     * Drive while holding a fixed field-relative heading.
-     * Softens rotation output while translating to avoid lurching.
-     */
+    /** Drive while holding a fixed field-relative heading. */
     private void lockAtAngle(double xSpeed, double ySpeed, double targetDeg) {
-        double error      = Math.IEEEremainder(getHeading(), 360);
-        double rotOutput  = turnPID.calculate(error, targetDeg);
+        double error     = Math.IEEEremainder(getHeading(), 360);
+        double rotOutput = turnPID.calculate(error, targetDeg);
 
         boolean moving = Math.abs(xSpeed) > 0.1 || Math.abs(ySpeed) > 0.1;
         if (moving)              rotOutput = MathUtil.clamp(rotOutput, -0.25, 0.25);
@@ -242,7 +343,6 @@ public class DriveTrain extends SubsystemBase {
         desaturateAndSet(desiredStates);
     }
 
-    /** Desaturate wheel speeds then push states to all four modules. */
     private void desaturateAndSet(SwerveModuleState[] states) {
         SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveContants.maxSpeedMetersPerSecond);
         frontLeft.setDesiredState( states[0]);
@@ -272,10 +372,18 @@ public class DriveTrain extends SubsystemBase {
 
     public void resetPoseToSelected() {
         Pose2d pose = autoPosChooser.getSelected();
-        if (pose != null) {
-            resetOdometry(pose);
-            System.out.println("Pose reset to: " + pose);
+        if (pose == null) return;
+
+        // Önce odometriyi sıfırla
+        resetOdometry(pose);
+
+        // Sonra QuestNav'ı aynı pose'a sıfırla
+        // (QuestNav artık offset değil, gerçek setPose() kullanıyor)
+        if (questNav != null) {
+            questNav.zeroPose(pose);
         }
+
+        System.out.println("Pose reset to: " + pose);
     }
 
     public void addVisionMeasurement(Pose2d visionPose, double timestamp, Matrix<N3, N1> stdDevs) {
@@ -285,15 +393,9 @@ public class DriveTrain extends SubsystemBase {
     // ── Gyro ──────────────────────────────────────────────────────────────────
 
     public Rotation2d getRotation2d() {
-        //double angle = navx.getAngle();
-        //return Rotation2d.fromDegrees(DriveContants.gyroReversed ? angle : -angle);
-        // Eğer QuestNav bağlıysa ve takip ediyorsa ondan al
-        if (questNav != null && questNav.isTracking()) {
+        /*if (questNav != null && questNav.isTracking()) {
             return questNav.getPose2d().getRotation();
-        }
-        
-        // YEDEK: QuestNav yoksa veya takip koptuysa NavX kullanmaya devam et
-        // (Veya istersen burayı tamamen NavX'siz yapabilirsin ama güvenlik için kalması iyidir)
+        }*/
         double angle = navx.getAngle();
         return Rotation2d.fromDegrees(DriveContants.gyroReversed ? angle : -angle);
     }
@@ -304,8 +406,11 @@ public class DriveTrain extends SubsystemBase {
 
     public void zeroHeading() {
         navx.reset();
+
+        // questNav burada henüz null olabilir (constructor'da çağrılır)
+        // getPose() ile mevcut poz korunur
         if (questNav != null) {
-            questNav.zeroPose(); // QuestNav'ı sıfırla
+            questNav.zeroPose(getPose());
         }
     }
 
@@ -313,8 +418,8 @@ public class DriveTrain extends SubsystemBase {
 
     public ChassisSpeeds getRobotRelativeSpeeds() {
         return DriveContants.kDriveKinematics.toChassisSpeeds(
-            frontLeft.getState(), frontRight.getState(),
-            backLeft.getState(),  backRight.getState()
+            frontLeft.getState(),  frontRight.getState(),
+            backLeft.getState(),   backRight.getState()
         );
     }
 
@@ -327,5 +432,16 @@ public class DriveTrain extends SubsystemBase {
 
     public void setQuestNav(QuestNavSubsystem questNav) {
         this.questNav = questNav;
+    }
+
+    public double getFieldRelativeVX() {
+        ChassisSpeeds robotSpeeds = getRobotRelativeSpeeds();
+        return ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, getRotation2d()).vxMetersPerSecond;
+    }
+
+    /** Robotun field-relative Y eksenindeki hızını döndürür (m/s). */
+    public double getFieldRelativeVY() {
+        ChassisSpeeds robotSpeeds = getRobotRelativeSpeeds();
+        return ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, getRotation2d()).vyMetersPerSecond;
     }
 }

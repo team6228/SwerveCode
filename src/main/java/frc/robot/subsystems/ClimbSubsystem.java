@@ -57,4 +57,17 @@ public class ClimbSubsystem extends SubsystemBase{
         compressor.disable();
     }
 
+    public void compressorEnable(){
+        compressor.enableDigital();
+    }
+
+    public boolean isCompReady(){
+        return compressor.isEnabled();
+    }
+
+
+
+    
+
+        
 }

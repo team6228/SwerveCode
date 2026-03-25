@@ -1,14 +1,10 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
+
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.QuestNavSubsystem;
-//import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.ShooterTestSubsystem;
 import frc.robot.subsystems.Swerve.DriveTrain;
 
@@ -28,113 +24,169 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class RobotContainer {
 
-  private final SendableChooser<Command> autoChooser;
+    private final SendableChooser<Command> autoChooser;
 
-  private final DriveTrain drivetrain = new DriveTrain();
-  private final QuestNavSubsystem questNav = new QuestNavSubsystem(drivetrain);
-  //private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem(drivetrain);
-  private final FeederSubsystem feederSubsystem = new FeederSubsystem();
-  private  final ClimbSubsystem climbSubsystem = new ClimbSubsystem();
-  private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem(); 
+    private final DriveTrain         drivetrain      = new DriveTrain();
+    private final QuestNavSubsystem   questNav        = new QuestNavSubsystem(drivetrain);
+    private final FeederSubsystem     feederSubsystem = new FeederSubsystem();
+    private final ClimbSubsystem      climbSubsystem  = new ClimbSubsystem();
+    private final IntakeSubsystem     intakeSubsystem = new IntakeSubsystem();
+    private final ShooterTestSubsystem shooter        = new ShooterTestSubsystem(drivetrain);
 
-  private final ShooterTestSubsystem shooter = new ShooterTestSubsystem(drivetrain);
+    public static final CommandXboxController primary = new CommandXboxController(OIConstants.primaryPort);
 
-  public static final CommandXboxController primary = new CommandXboxController(OIConstants.primaryPort);
+    public static boolean isCompB;
 
-  //private static final double slowFactor = 0.5;
+    public RobotContainer() {
 
+        // QuestNav'ı DriveTrain'e bağla — setQuestNav çağrısı constructor'dan sonra
+        // yapıldığı için resetOdometry içindeki questNav null kontrolü bunu korur.
+        drivetrain.setQuestNav(questNav);
 
-  public RobotContainer() {
+        // ── Named Commands (PathPlanner) ──────────────────────────────────────
+        NamedCommands.registerCommand("OpenIntake",
+            new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
 
-    drivetrain.setQuestNav(questNav);
+        NamedCommands.registerCommand("CloseIntake",
+            new InstantCommand(() -> intakeSubsystem.closeIntake(), intakeSubsystem));
 
-    NamedCommands.registerCommand("Open Intake", new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
-    NamedCommands.registerCommand("Close Intake", new InstantCommand(() -> intakeSubsystem.closeIntake(), intakeSubsystem));
-    NamedCommands.registerCommand("Open Climb", new InstantCommand(() -> climbSubsystem.climbForward(), climbSubsystem));
-    NamedCommands.registerCommand("Close Climb", new InstantCommand(() -> climbSubsystem.climbReverse(), climbSubsystem));
-    NamedCommands.registerCommand("Feed Shooter", new InstantCommand(() -> feederSubsystem.feedShooter(), feederSubsystem));
-    NamedCommands.registerCommand("Shoot", new ParallelCommandGroup(
-                  new RunCommand(() -> {shooter.shoot(); shooter.enablePID();}, shooter),
-                  new WaitUntilCommand(() -> shooter.isReady())
+        NamedCommands.registerCommand("RunIntake", 
+            new InstantCommand(() -> intakeSubsystem.runIntake(), intakeSubsystem));
+
+        NamedCommands.registerCommand("OpenClimb",
+            new InstantCommand(() -> climbSubsystem.climbForward(), climbSubsystem));
+
+        NamedCommands.registerCommand("CloseClimb",
+            new InstantCommand(() -> climbSubsystem.climbReverse(), climbSubsystem));
+
+        NamedCommands.registerCommand("FeedShooter",
+            new InstantCommand(() -> feederSubsystem.feedShooter(), feederSubsystem));
+
+        NamedCommands.registerCommand("StopIntake",
+            new InstantCommand(() -> intakeSubsystem.stopIntake(), intakeSubsystem));
+
+        NamedCommands.registerCommand("Shoot",
+            new ParallelCommandGroup(
+                new RunCommand(() -> { shooter.shoot(); shooter.enablePID(); }, shooter),
+                new WaitUntilCommand(() -> shooter.isReady())
                     .andThen(new RunCommand(() -> feederSubsystem.feedShooter(), feederSubsystem))
-                    
-                  ));
+            ));
 
-    configureBindings();
+        NamedCommands.registerCommand("DriveAtTarget", 
+            new RunCommand(() -> drivetrain.driveAtTarget(
+                0.5,0.5),
+                drivetrain
+            ));
 
-    autoChooser = AutoBuilder.buildAutoChooser();
-    SmartDashboard.putData("Auto Chooser", autoChooser);
-        // Varsayılan Sürüş Komutu: Robot her zaman joystick verilerini dinler
-    drivetrain.setDefaultCommand(
-        new RunCommand(
-            () -> {
-                // Joystick verilerini al (WPILib standartları için Y ters çevrilir)
-                double ySpeed = -MathUtil.applyDeadband(primary.getLeftY(), OIConstants.driveDeadband);
-                double xSpeed = -MathUtil.applyDeadband(primary.getLeftX(), OIConstants.driveDeadband);
-                double rot = -MathUtil.applyDeadband(primary.getRightX(), OIConstants.driveDeadband);
+        NamedCommands.registerCommand("StopShooter", 
+            new InstantCommand(() -> shooter.stopShooter(), shooter));
 
-                // B butonuna basılıyorsa hızı %50'ye düşür
-                /*if (primary.b().getAsBoolean()) {
-                    ySpeed *= slowFactor;
-                    xSpeed *= slowFactor;
-                    rot *= slowFactor;
-                }*/
+        configureBindings();
 
-                // Sürüşü başlat (fieldRelative: true -> Saha odaklı sürüş)
-                drivetrain.drive(ySpeed, xSpeed, rot, true);
-            },
-            drivetrain));
+        autoChooser = AutoBuilder.buildAutoChooser();
+        SmartDashboard.putData("Auto Chooser", autoChooser);
+        SmartDashboard.putBoolean("compB", isCompB);
 
-  }
+        // ── Default Drive Command ─────────────────────────────────────────────
+        drivetrain.setDefaultCommand(
+            new RunCommand(
+                () -> {
+                    double ySpeed = -MathUtil.applyDeadband(primary.getLeftY(),  OIConstants.driveDeadband);
+                    double xSpeed = -MathUtil.applyDeadband(primary.getLeftX(),  OIConstants.driveDeadband);
+                    double rot    = -MathUtil.applyDeadband(primary.getRightX(), OIConstants.driveDeadband);
+                    drivetrain.drive(ySpeed, xSpeed, rot, true);
+                },
+                drivetrain));
+    }
 
+    private void configureBindings() {
 
-  private void configureBindings() {
-    // Start butonuna basıldığında Gyro'yu (ön yönü) o anki bakış yönüne göre sıfırla
-    primary.start().onTrue(Commands.runOnce(() -> drivetrain.zeroHeading()));
-    primary.start().onTrue(Commands.runOnce(() -> questNav.zeroPose()));
-    primary.start().onTrue(Commands.runOnce(() -> drivetrain.resetPoseToSelected()));
+        // ── Start butonu: NavX + Pose sıfırlama ──────────────────────────────
+        // Tek komutta toplandı — üçlü bağımsız onTrue yerine.
+        // Sıra: zeroHeading() → resetPoseToSelected() (içinde questNav.resetToPose() var)
+        primary.start().onTrue(Commands.runOnce(() -> {
+            drivetrain.zeroHeading();          // NavX sıfırla
+            drivetrain.resetPoseToSelected();  // poseEstimator + QuestNav offset'i sıfırla
+        }));
 
-    // X butonuna basılı tutarken tekerlekleri X şeklinde kilitle (Defans modu)
-    primary.x().whileTrue(new RunCommand(() -> drivetrain.setX(), drivetrain));
+        // ── X: Tekerlekleri X'e kilitle (defans) ─────────────────────────────
+        primary.x().whileTrue(new RunCommand(() -> drivetrain.setX(), drivetrain));
 
-    primary.rightBumper().whileTrue(new RunCommand(() -> drivetrain.driveAtTarget(-MathUtil.applyDeadband(primary.getLeftY(),0.1), -MathUtil.applyDeadband(primary.getLeftX(), 0.1)), drivetrain));
-    //primary.rightBumper().whileTrue(new RunCommand(() -> drivetrain.lockFront(-MathUtil.applyDeadband(primary.getLeftY(),0.1), -MathUtil.applyDeadband(primary.getLeftX(), 0.1)), drivetrain));
-    primary.leftBumper().onTrue(new InstantCommand(() -> intakeSubsystem.intakeToggle(), intakeSubsystem));
+        // ── Right Bumper: Hedefe kilitlenerek sürüş ──────────────────────────
+        primary.rightBumper().whileTrue(
+        new ParallelCommandGroup(
+            new RunCommand(
+                () -> drivetrain.driveAtTarget(
+                    -MathUtil.applyDeadband(primary.getLeftY(), 0.1),
+                    -MathUtil.applyDeadband(primary.getLeftX(), 0.1)),
+                drivetrain),
+            new RunCommand(
+                () -> shooter.setDynamicTarget(shooter.getDynamicShotParameters()),
+                shooter)
+        ))
+        .onFalse(new InstantCommand(() -> {
+            shooter.stopShooter();
+            shooter.disablePID();
+        }));
 
-    // Sadece onTrue kullanıyoruz. Bas-çek yapınca toggle çalışır.
-    primary.povUp().onTrue(new InstantCommand(() -> climbSubsystem.climbToggle(), climbSubsystem));
-    primary.povDown().onTrue(new InstantCommand(() -> intakeSubsystem.closeIntake(), intakeSubsystem)).onFalse(new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
+        // ── Left Bumper: Intake toggle ────────────────────────────────────────
+        primary.leftBumper().onTrue(new InstantCommand(() -> intakeSubsystem.intakeToggle(), intakeSubsystem));
 
-    primary.rightTrigger().whileTrue(
-                new ParallelCommandGroup(
-                  new RunCommand(() -> {shooter.shoot(); shooter.enablePID();}, shooter),
-                  new InstantCommand(() -> climbSubsystem.compressorDisable(), climbSubsystem),
-                  new WaitUntilCommand(() -> shooter.isReady())
+        // ── POV Up: Tırmanma toggle ───────────────────────────────────────────
+        primary.povUp().onTrue(new InstantCommand(() -> climbSubsystem.climbToggle(), climbSubsystem));
+
+        // ── POV Down: Intake kapat / aç ──────────────────────────────────────
+        primary.povDown()
+            .onTrue( new InstantCommand(() -> intakeSubsystem.openIntake(), intakeSubsystem));
+
+        // ── Right Trigger: Ateşleme ───────────────────────────────────────────
+        primary.rightTrigger().whileTrue(
+            new ParallelCommandGroup(
+                new RunCommand(() -> { shooter.shoot(); shooter.enablePID(); }, shooter),
+                new InstantCommand(() -> climbSubsystem.compressorDisable(), climbSubsystem),
+                new WaitUntilCommand(() -> shooter.isReady())
                     .andThen(new RunCommand(() -> feederSubsystem.feedShooter(), feederSubsystem))
-                    
-                  )
-                )
-                .onFalse(new InstantCommand(() -> {
-                  shooter.stopShooter();
-                  shooter.disablePID();
-                  feederSubsystem.stopMotors();
-                }));
+            ))
+            .onFalse(new InstantCommand(() -> {
+                shooter.stopShooter();
+                shooter.disablePID();
+                feederSubsystem.stopMotors();
+                climbSubsystem.compressorEnable();
+                
+                
+            }));
 
-   
-    primary.leftTrigger().whileTrue(new InstantCommand(() -> intakeSubsystem.runIntake(), intakeSubsystem));
-    primary.leftTrigger().onFalse(new InstantCommand(() -> intakeSubsystem.stopIntake(), intakeSubsystem));
+        // ── Left Trigger: Intake çalıştır / durdur ───────────────────────────
+        primary.leftTrigger().whileTrue( new InstantCommand(() -> intakeSubsystem.runIntake(),  intakeSubsystem));
+        primary.leftTrigger().onFalse(   new InstantCommand(() -> intakeSubsystem.stopIntake(), intakeSubsystem));
 
-    primary.b().onTrue(new InstantCommand(() -> climbSubsystem.compressorToggle(), climbSubsystem));
+        // ── B: Kompresör toggle ───────────────────────────────────────────────
+        primary.b().onTrue(new InstantCommand(() -> climbSubsystem.compressorToggle(), climbSubsystem));
+        /*primary.b().onTrue(new RunCommand(() -> {
+                        climbSubsystem.compressorToggle();
 
-    primary.a().onTrue(new InstantCommand(() -> shooter.toggleShooter(), shooter));
-  }
+                        if(climbSubsystem.isCompReady()){
+                                isCompB=true;
+                        }
+                        else{
+                            isCompB=false;
+                        }
+                    }, 
+                    climbSubsystem)
+                );
+            */
+        // ── A: Shooter toggle ─────────────────────────────────────────────────
+        primary.a().onTrue(new InstantCommand(() -> shooter.toggleShooter(), shooter));
 
-  public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
-  }
+        /*primary.y().whileTrue(new RunCommand(() -> {
+                shooter.setHoodAngle(20);
+                shooter.setMotorRPM(3500);
+            }, 
+            shooter
+        ));*/
+    }
 
+    public Command getAutonomousCommand() {
+        return autoChooser.getSelected();
+    }
 }
-  
-
-
-
