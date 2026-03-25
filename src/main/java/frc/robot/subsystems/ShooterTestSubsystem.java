@@ -317,8 +317,6 @@ public class ShooterTestSubsystem extends SubsystemBase {
         double dy             = kHubLocation.getY() - currentPose.getY();
         double staticDistance = Math.hypot(dx, dy);
 
-        double currentRPMDynamic = masterNeo.getEncoder().getVelocity();
-
         // ------------------------------------------------------------------
         // 2. Robot hızını field-relative'e çevir
         // ------------------------------------------------------------------

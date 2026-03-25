@@ -4,6 +4,7 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.QuestNavSubsystem;
 import frc.robot.subsystems.ShooterTestSubsystem;
 import frc.robot.subsystems.Swerve.DriveTrain;
@@ -32,6 +33,7 @@ public class RobotContainer {
     private final ClimbSubsystem      climbSubsystem  = new ClimbSubsystem();
     private final IntakeSubsystem     intakeSubsystem = new IntakeSubsystem();
     private final ShooterTestSubsystem shooter        = new ShooterTestSubsystem(drivetrain);
+    private final LedSubsystem ledSubsystem = new LedSubsystem();
 
     public static final CommandXboxController primary = new CommandXboxController(OIConstants.primaryPort);
 

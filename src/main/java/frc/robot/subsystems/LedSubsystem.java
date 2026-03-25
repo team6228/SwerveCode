@@ -1,4 +1,4 @@
-/*package frc.robot.subsystems;
+package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
@@ -29,7 +29,7 @@ public class LedSubsystem extends SubsystemBase{
     public LedSubsystem() {
         drivetrain.setQuestNav(questNav);
 
-        led = new AddressableLED(LedConstants.kLEDPwmPort);
+        led = new AddressableLED(LedConstants.kLEDDioPort);
         buffer = new AddressableLEDBuffer(LedConstants.kLedLenght);
         led.setLength(LedConstants.kLedLenght);
         led.setData(buffer);
@@ -70,4 +70,4 @@ public class LedSubsystem extends SubsystemBase{
             buffer.setRGB(i, r, g, b);
         }
     }
-}*/
+}
