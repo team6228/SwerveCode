@@ -34,8 +34,8 @@
   "eventMarkers": [
     {
       "name": "Shoot",
-      "waypointRelativePos": 0,
-      "endWaypointRelativePos": 1.0,
+      "waypointRelativePos": 1.0,
+      "endWaypointRelativePos": null,
       "command": null
     }
   ],

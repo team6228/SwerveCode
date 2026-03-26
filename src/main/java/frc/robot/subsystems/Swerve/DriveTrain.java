@@ -78,9 +78,9 @@ public class DriveTrain extends SubsystemBase {
         autoPosChooser.addOption("Left (Blue)",       new Pose2d(3.5,  5.1, Rotation2d.fromDegrees(0)));
         autoPosChooser.addOption("Right (Blue)",      new Pose2d(3.5,  2.9, Rotation2d.fromDegrees(0)));
 
-        autoPosChooser.addOption("Center (Red)",       new Pose2d(13.018,  4.041, Rotation2d.fromDegrees(0)));
-        autoPosChooser.addOption("Right (Red)",      new Pose2d(13.024,  2.9, Rotation2d.fromDegrees(0)));
-        autoPosChooser.addOption("Left (Red)",       new Pose2d(13.013,  5.084, Rotation2d.fromDegrees(0)));
+        autoPosChooser.addOption("Center (Red)",       new Pose2d(13.018,  4.041, Rotation2d.fromDegrees(180)));
+        autoPosChooser.addOption("Right (Red)",      new Pose2d(13.024,  2.9, Rotation2d.fromDegrees(180)));
+        autoPosChooser.addOption("Left (Red)",       new Pose2d(13.013,  5.084, Rotation2d.fromDegrees(180)));
         SmartDashboard.putData("Auto Start Pose", autoPosChooser);
         SmartDashboard.putData("Update Pose",     new InstantCommand(this::resetPoseToSelected).ignoringDisable(true));
         SmartDashboard.putData("Field",           m_field);
@@ -387,7 +387,13 @@ public class DriveTrain extends SubsystemBase {
     public void resetPoseToSelected() {
         Pose2d pose = autoPosChooser.getSelected();
         if (pose == null) return;
-
+        
+        poseEstimator.resetPosition(
+            getRotation2d(), 
+            getModulePositions(), 
+            pose
+        );
+        // ** zeroHeading() 
         // Önce odometriyi sıfırla
         resetOdometry(pose);
 

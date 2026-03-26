@@ -67,6 +67,9 @@ public class RobotContainer {
         NamedCommands.registerCommand("StopIntake",
             new InstantCommand(() -> intakeSubsystem.stopIntake(), intakeSubsystem));
 
+        NamedCommands.registerCommand("ToggleIntake", 
+            new InstantCommand(() -> intakeSubsystem.intakeToggle(), intakeSubsystem));
+
         NamedCommands.registerCommand("Shoot",
             new ParallelCommandGroup(
                 new RunCommand(() -> { shooter.shoot(); shooter.enablePID(); }, shooter),
